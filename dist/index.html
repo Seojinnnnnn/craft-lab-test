@@ -61,7 +61,7 @@
         <section class="section">
           <div class="section-title"><span>Format</span><span id="formatLabel">Basic</span></div>
           <div class="modes">
-            <button class="mode active" data-mode="basic"><img src="assets/basic.svg" alt=""><span>기본형<small>Dynamic block</small></span></button>
+            <button class="mode active" data-mode="basic"><img src="assets/basic.svg" alt=""><span>기본형<small>All motion loop</small></span></button>
             <button class="mode" data-mode="row1"><img src="assets/row1.svg" alt=""><span>1 row<small>Horizontal</small></span></button>
             <button class="mode" data-mode="row2"><img src="assets/row2.svg" alt=""><span>2 row<small>Stacked</small></span></button>
             <button class="mode" data-mode="row3"><img src="assets/row3.svg" alt=""><span>3 row<small>Compact</small></span></button>
@@ -69,7 +69,7 @@
         </section>
         <section class="section">
           <div class="section-title"><span>Playback</span><span id="playState">Ready</span></div>
-          <div class="transport"><button class="primary" id="play">Replay selected motion</button></div>
+          <div class="transport"><button class="primary" id="play">Pause loop</button></div>
           <div class="range-row"><label for="bpm">BPM</label><input id="bpm" type="range" min="80" max="180" value="130" step="1"><output id="bpmOut">130</output></div>
           <div class="range-row"><label for="tightness">Tightness</label><input id="tightness" type="range" min="0" max="100" value="72" step="1"><output id="tightnessOut">72%</output></div>
           <div class="beat-track" id="beatTrack" aria-hidden="true"></div>
@@ -87,44 +87,59 @@
       {name:'LAB',src:'assets/lab.svg',span:3}
     ];
     const layouts={
-      basic:[[0,1],[2,0],[3,2],[4,0],[5,1]],
+      basic:[[0,0],[0,1],[1,1],[2,1],[0,2]],
+      row1Expand:[[0,1],[2,1],[3,1],[4,1],[5,2]],
       row1:[[0,1],[2,1],[3,1],[4,1],[5,1]],
-      row1A:[[0,1],[2,0],[3,1],[4,1],[5,1]],
-      row1F:[[0,1],[2,1],[3,2],[4,1],[5,1]],
-      row1T:[[0,1],[2,1],[3,1],[4,0],[5,1]],
-      row2:[[0,0],[2,0],[3,0],[4,0],[2,1]],
-      row2A:[[0,0],[2,-1],[3,0],[4,0],[2,1]],
-      row2F:[[0,0],[2,0],[3,1],[4,0],[2,2]],
-      row2T:[[0,0],[2,0],[3,0],[4,1],[2,2]],
-      row2Down:[[0,0],[2,0],[3,0],[4,0],[2,2]],
-      row3Wide:[[0,0],[2,1],[3,1],[4,1],[2,2]],
-      row3:[[0,0],[0,1],[1,1],[2,1],[0,2]],
-      row3T:[[0,0],[0,1],[1,1],[2,0],[0,2]],
-      row3Lab:[[0,0],[0,1],[1,1],[2,1],[1,2]],
-      row3CR:[[1,0],[0,1],[1,1],[2,1],[0,2]]
+      r1ArtsL:[[0,1],[2,0],[3,1],[4,1],[5,0]],
+      r1ArtsR:[[0,0],[2,1],[3,0],[4,0],[5,1]],
+      r1FabL:[[0,1],[2,1],[3,0],[4,1],[5,0]],
+      r1FabR:[[0,0],[2,0],[3,1],[4,0],[5,1]],
+      r1TechL:[[0,1],[2,1],[3,1],[4,0],[5,0]],
+      r1TechR:[[0,0],[2,0],[3,0],[4,1],[5,1]],
+      row2Drop:[[0,1],[2,1],[3,1],[4,1],[5,2]],
+      row2Slide:[[0,1],[2,1],[3,1],[4,1],[2,2]],
+      r2A2:[[0,1],[2,0],[3,1],[4,1],[2,2]],
+      r2A1:[[0,1],[2,0],[3,1],[4,1],[1,2]],
+      r2A0:[[0,1],[2,0],[3,1],[4,1],[0,2]],
+      r2F0:[[0,1],[2,1],[3,0],[4,1],[0,2]],
+      r2F1:[[0,1],[2,1],[3,0],[4,1],[1,2]],
+      r2F2:[[0,1],[2,1],[3,0],[4,1],[2,2]],
+      r2T2:[[0,1],[2,1],[3,1],[4,0],[2,2]],
+      r2T1:[[0,1],[2,1],[3,1],[4,0],[1,2]],
+      r2T0:[[0,1],[2,1],[3,1],[4,0],[0,2]],
+      r3Prep1:[[0,0],[2,0],[3,1],[4,2],[3,2]],
+      r3Prep2:[[0,0],[2,0],[2,1],[2,2],[3,2]],
+      r3A2:[[0,0],[2,0],[2,1],[2,2],[3,2]],
+      r3A1:[[0,0],[2,0],[2,1],[2,2],[3,1]],
+      r3A0:[[0,0],[2,0],[2,1],[2,2],[3,0]],
+      r3F0:[[0,1],[2,0],[2,1],[2,2],[3,0]],
+      r3F1:[[0,1],[2,0],[2,1],[2,2],[3,1]],
+      r3F2:[[0,1],[2,0],[2,1],[2,2],[3,2]],
+      r3T2:[[0,2],[2,0],[2,1],[2,2],[3,2]],
+      r3T1:[[0,2],[2,0],[2,1],[2,2],[3,1]],
+      r3T0:[[0,2],[2,0],[2,1],[2,2],[3,0]]
     };
     const labels={basic:'Basic',row1:'1 row',row2:'2 row',row3:'3 row'};
     const grid=document.querySelector('#logoGrid');
-    let mode='basic',poseName='basic',runId=0,beatIndex=0;
+    let mode='basic',poseName='basic',runId=0,beatIndex=0,isLooping=true;
     const pieces=elements.map((element)=>{const image=document.createElement('img');image.className='piece';image.src=element.src;image.alt='';image.style.setProperty('--span',element.span);image.setAttribute('aria-hidden','true');grid.appendChild(image);return image});
     const beats=Array.from({length:8},()=>{const b=document.createElement('i');b.className='beat';document.querySelector('#beatTrack').appendChild(b);return b});
-    const sequences={
-      basic:['basic'],
-      row1:['basic','row1','row1A','row1','row1F','row1','row1T','row1'],
-      row2:['basic','row1','row2','row2A','row2','row2F','row2','row2T','row2'],
-      row3:['basic','row1','row2','row2Down','row3Wide','row3','row3T','row3','row3Lab','row3','row3CR','row3']
-    };
+    const row1Sequence=['basic','basic','basic','row1Expand','row1','r1ArtsL','r1ArtsR','r1FabL','r1FabR','r1TechL','r1TechR','row1','row1Expand','basic','basic'];
+    const row2Sequence=['basic','basic','basic','row1Expand','row1','row2Drop','row2Slide','r2A2','r2A1','r2A0','r2F0','r2F1','r2F2','r2T2','r2T1','r2T0','row2Slide','row2Drop','row1','row1Expand','basic','basic'];
+    const row3Sequence=['basic','basic','basic','row1Expand','row1','row2Drop','row2Slide','r2A2','r3Prep1','r3Prep2','r3A2','r3A1','r3A0','r3F0','r3F1','r3F2','r3T2','r3T1','r3T0','r3T1','r3T2','r3F2','r3Prep2','r3Prep1','r2A2','row2Slide','row2Drop','row1','row1Expand','basic','basic'];
+    const sequences={row1:row1Sequence,row2:row2Sequence,row3:row3Sequence};
+    sequences.basic=[...row1Sequence,...row2Sequence,...row3Sequence];
     const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
     function timing(){const beat=60000/+document.querySelector('#bpm').value;const tight=+document.querySelector('#tightness').value/100;return {beat,motion:beat*(.92-tight*.58)}}
     function setPose(name){poseName=name;const pose=layouts[name];pieces.forEach((piece,i)=>{piece.style.setProperty('--x',pose[i][0]);piece.style.setProperty('--y',pose[i][1])})}
     function setBeat(i){beatIndex=i;beats.forEach((b,n)=>b.classList.toggle('on',n===i%beats.length))}
     function syncControls(){const {motion}=timing();const tight=+document.querySelector('#tightness').value;document.documentElement.style.setProperty('--motion-ms',motion+'ms');document.documentElement.style.setProperty('--motion-ease',tight>70?'cubic-bezier(.18,.92,.22,1)':'cubic-bezier(.45,0,.25,1)');document.querySelector('#bpmOut').textContent=document.querySelector('#bpm').value;document.querySelector('#tightnessOut').textContent=tight+'%'}
-    async function playSequence(target){const id=++runId;mode=target;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));document.querySelector('#formatLabel').textContent=labels[mode];document.querySelector('#stageMode').textContent=labels[mode];document.querySelector('#playState').textContent='Playing';const steps=sequences[target];for(let i=0;i<steps.length;i++){if(id!==runId)return;syncControls();setPose(steps[i]);setBeat(i);await sleep(timing().beat)}if(id===runId)document.querySelector('#playState').textContent='Complete'}
-    document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>playSequence(b.dataset.mode));
-    document.querySelector('#play').onclick=()=>playSequence(mode);
+    async function playLoop(target){const id=++runId;mode=target;isLooping=true;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));document.querySelector('#formatLabel').textContent=labels[mode];document.querySelector('#stageMode').textContent=labels[mode];document.querySelector('#playState').textContent='Looping';document.querySelector('#play').textContent='Pause loop';const steps=sequences[target];let cycle=0;while(id===runId&&isLooping){for(let i=0;i<steps.length;i++){if(id!==runId||!isLooping)return;syncControls();setPose(steps[i]);setBeat(cycle+i);await sleep(timing().beat)}cycle+=steps.length}}
+    document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>playLoop(b.dataset.mode));
+    document.querySelector('#play').onclick=()=>{if(isLooping){isLooping=false;++runId;document.querySelector('#playState').textContent='Paused';document.querySelector('#play').textContent='Resume loop'}else{playLoop(mode)}};
     document.querySelector('#bpm').oninput=syncControls;
     document.querySelector('#tightness').oninput=syncControls;
-    syncControls();setPose('basic');setBeat(0);
+    syncControls();setPose('basic');setBeat(0);setTimeout(()=>playLoop('basic'),timing().beat);
   </script>
 </body>
 </html>
