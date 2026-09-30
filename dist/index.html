@@ -22,9 +22,7 @@
     .stage::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:calc(var(--cell)/2) calc(var(--cell)/2);opacity:.18;pointer-events:none}
     .stage-note{position:absolute;top:16px;left:18px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
     .logo-grid{position:relative;width:calc(var(--cell)*8);height:calc(var(--cell)*3);max-width:92%;transition:transform .3s ease}
-    .tile{position:absolute;width:var(--cell);height:var(--cell);display:grid;place-items:center;border:2px solid var(--ink);font-size:calc(var(--cell)*.54);font-weight:400;line-height:1;background:#fff;transform:translate3d(calc(var(--x)*var(--cell)),calc(var(--y)*var(--cell)),0);transition:transform var(--duration,900ms) cubic-bezier(.76,0,.24,1),background .18s,color .18s;user-select:none;touch-action:none}
-    .tile:hover,.tile.selected{background:var(--ink);color:white}
-    .tile.selected{outline:3px solid var(--accent);outline-offset:4px;z-index:3}
+    .tile{position:absolute;width:var(--cell);height:var(--cell);display:grid;place-items:center;border:2px solid var(--ink);font-size:calc(var(--cell)*.54);font-weight:400;line-height:1;background:#fff;transform:translate3d(calc(var(--x)*var(--cell)),calc(var(--y)*var(--cell)),0);transition:transform var(--motion-ms,300ms) var(--motion-ease,cubic-bezier(.2,.85,.25,1)),background .14s,color .14s;user-select:none;will-change:transform}
     .tile.moving{z-index:2}
     .controls{border-top:1px solid var(--ink);display:flex;flex-direction:column;min-height:0}
     .controls h1{font-size:28px;line-height:1.02;margin:18px 0 8px;letter-spacing:-.05em}
@@ -37,15 +35,13 @@
     .mode.active img{filter:invert(1)}
     .mode>span{font-size:13px;opacity:1;margin:0}.mode small{display:block;font-size:11px;opacity:.55;margin-top:4px;font-weight:400}
     .mode.active{background:var(--ink);color:#fff}
-    .transport{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .transport{display:grid;grid-template-columns:1fr;gap:8px}
     .primary,.secondary{height:44px;border:1px solid var(--ink);background:var(--ink);color:#fff}
     .secondary{background:transparent;color:var(--ink)}
-    .range-row{display:grid;grid-template-columns:76px 1fr 42px;gap:8px;align-items:center;font-size:13px;margin-top:12px}
+    .range-row{display:grid;grid-template-columns:76px 1fr 52px;gap:8px;align-items:center;font-size:13px;margin-top:12px}
     input[type=range]{width:100%;accent-color:var(--accent)}
-    .nudge{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,40px);justify-content:center;gap:5px}
-    .nudge button{border:1px solid var(--ink);background:#fff}
-    .nudge button:hover{background:var(--accent);color:white;border-color:var(--accent)}
-    .nudge .up{grid-column:2}.nudge .left{grid-column:1;grid-row:2}.nudge .reset{grid-column:2;grid-row:2;font-size:10px}.nudge .right{grid-column:3;grid-row:2}.nudge .down{grid-column:2;grid-row:3}
+    .beat-track{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:14px}
+    .beat{height:5px;background:rgba(35,24,21,.15)}.beat.on{background:var(--accent)}
     footer{border-top:1px solid var(--ink);padding-top:14px;display:flex;justify-content:space-between;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
     @media(max-width:900px){.shell{padding:18px}.status{display:none}main{grid-template-columns:1fr;padding-top:18px}.stage{min-height:58vh}.controls{min-height:auto}.logo-grid{transform:scale(.88)} }
     @media(max-width:560px){:root{--cell:33px}.stage{min-height:460px}.logo-grid{transform:none}.controls h1{font-size:24px}footer{gap:20px}}
@@ -57,12 +53,12 @@
     <header><div class="brand">CRAFT LAB</div><div class="status">Motion playground</div></header>
     <main>
       <section class="stage" aria-label="로고 모션 미리보기">
-        <div class="stage-note">Click a letter to move it</div>
+        <div class="stage-note"><span id="stageMode">Basic</span> · Grid motion</div>
         <div class="logo-grid" id="logoGrid" aria-live="polite"></div>
       </section>
       <aside class="controls">
         <h1>Logo<br>in motion.</h1>
-        <p class="lede">행 구성을 전환하거나 글자를 선택해 상하좌우로 움직여 보세요.</p>
+        <p class="lede">슬라이드의 구조를 따라 글자들이 가로·세로 격자 위에서 한 칸씩 맞물려 이동합니다.</p>
         <section class="section">
           <div class="section-title"><span>Format</span><span id="formatLabel">Basic</span></div>
           <div class="modes">
@@ -74,14 +70,10 @@
         </section>
         <section class="section">
           <div class="section-title"><span>Playback</span><span id="playState">Ready</span></div>
-          <div class="transport"><button class="primary" id="play">Play sequence</button><button class="secondary" id="shuffle">Shuffle</button></div>
-          <div class="range-row"><label for="speed">Duration</label><input id="speed" type="range" min="250" max="1800" value="900" step="50"><output id="speedOut">0.9s</output></div>
-        </section>
-        <section class="section">
-          <div class="section-title"><span>Selected letter</span><span id="selectedLabel">C · 01</span></div>
-          <div class="nudge" aria-label="선택 글자 이동">
-            <button class="up" data-dx="0" data-dy="-1" aria-label="위로">↑</button><button class="left" data-dx="-1" data-dy="0" aria-label="왼쪽으로">←</button><button class="reset" id="resetNudge">RESET</button><button class="right" data-dx="1" data-dy="0" aria-label="오른쪽으로">→</button><button class="down" data-dx="0" data-dy="1" aria-label="아래로">↓</button>
-          </div>
+          <div class="transport"><button class="primary" id="play">Replay selected motion</button></div>
+          <div class="range-row"><label for="bpm">BPM</label><input id="bpm" type="range" min="80" max="180" value="130" step="1"><output id="bpmOut">130</output></div>
+          <div class="range-row"><label for="tightness">Tightness</label><input id="tightness" type="range" min="0" max="100" value="72" step="1"><output id="tightnessOut">72%</output></div>
+          <div class="beat-track" id="beatTrack" aria-hidden="true"></div>
         </section>
       </aside>
     </main>
@@ -90,28 +82,44 @@
   <script>
     const letters=[...'CRAFTLAB'];
     const layouts={
+      basic:[[0,1],[1,1],[2,0],[3,2],[4,0],[5,1],[6,1],[7,1]],
       row1:[[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1]],
+      row1A:[[0,1],[1,1],[2,0],[3,1],[4,1],[5,1],[6,1],[7,1]],
+      row1F:[[0,1],[1,1],[2,1],[3,2],[4,1],[5,1],[6,1],[7,1]],
+      row1T:[[0,1],[1,1],[2,1],[3,1],[4,0],[5,1],[6,1],[7,1]],
       row2:[[0,0],[1,0],[2,0],[3,0],[4,0],[2,1],[3,1],[4,1]],
+      row2A:[[0,0],[1,0],[2,-1],[3,0],[4,0],[2,1],[3,1],[4,1]],
+      row2F:[[0,0],[1,0],[2,0],[3,1],[4,0],[2,1],[3,2],[4,1]],
+      row2T:[[0,0],[1,0],[2,0],[3,0],[5,0],[2,1],[3,1],[4,1]],
+      row2Down:[[0,0],[1,0],[2,0],[3,0],[4,0],[2,2],[3,2],[4,2]],
+      row3Wide:[[0,0],[1,0],[2,1],[3,1],[4,1],[2,2],[3,2],[4,2]],
       row3:[[0,0],[1,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]],
-      basic:[[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1]]
+      row3T:[[0,0],[1,0],[0,1],[1,1],[2,0],[0,2],[1,2],[2,2]],
+      row3B:[[0,0],[1,0],[0,1],[1,1],[2,1],[0,2],[1,2],[3,2]],
+      row3C:[[-1,0],[1,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]]
     };
     const labels={basic:'Basic',row1:'1 row',row2:'2 row',row3:'3 row'};
     const grid=document.querySelector('#logoGrid');
-    let mode='basic',selected=0,offsets=letters.map(()=>[0,0]),timer=null;
-    const tiles=letters.map((letter,i)=>{const b=document.createElement('button');b.className='tile';b.textContent=letter;b.setAttribute('aria-label',`${letter} 글자 ${i+1}`);b.onclick=()=>select(i);grid.appendChild(b);return b});
-    function basicPose(i){const p=layouts.row1[i].slice();if(i===2)p[1]=0;if(i===3)p[1]=2;if(i===4)p[1]=0;return p}
-    function pose(i){const base=mode==='basic'?basicPose(i):layouts[mode][i];return [base[0]+offsets[i][0],base[1]+offsets[i][1]]}
-    function render(){tiles.forEach((t,i)=>{const [x,y]=pose(i);t.style.setProperty('--x',x);t.style.setProperty('--y',y);t.classList.toggle('selected',i===selected)});document.querySelector('#formatLabel').textContent=labels[mode];document.querySelector('#selectedLabel').textContent=`${letters[selected]} · ${String(selected+1).padStart(2,'0')}`}
-    function select(i){selected=i;render()}
-    function setMode(next){mode=next;offsets=letters.map(()=>[0,0]);document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));render()}
-    document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
-    document.querySelectorAll('.nudge [data-dx]').forEach(b=>b.onclick=()=>{offsets[selected][0]+=+b.dataset.dx;offsets[selected][1]+=+b.dataset.dy;tiles[selected].classList.add('moving');setTimeout(()=>tiles[selected]?.classList.remove('moving'),900);render()});
-    document.querySelector('#resetNudge').onclick=()=>{offsets[selected]=[0,0];render()};
-    document.querySelector('#speed').oninput=e=>{document.documentElement.style.setProperty('--duration',e.target.value+'ms');document.querySelector('#speedOut').textContent=(e.target.value/1000).toFixed(2).replace(/0$/,'')+'s'};
-    document.querySelector('#shuffle').onclick=()=>{offsets=offsets.map(()=>[Math.floor(Math.random()*3)-1,Math.floor(Math.random()*3)-1]);render()};
-    document.querySelector('#play').onclick=()=>{clearInterval(timer);const order=['row1','basic','row2','row3'];let i=0;document.querySelector('#playState').textContent='Playing';setMode(order[i]);timer=setInterval(()=>{i++;if(i>=order.length){clearInterval(timer);document.querySelector('#playState').textContent='Complete';return}setMode(order[i])},Math.max(450,+document.querySelector('#speed').value+180))};
-    window.addEventListener('keydown',e=>{const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};if(map[e.key]){e.preventDefault();offsets[selected][0]+=map[e.key][0];offsets[selected][1]+=map[e.key][1];render()}});
-    render();
+    let mode='basic',poseName='basic',runId=0,beatIndex=0;
+    const tiles=letters.map((letter)=>{const b=document.createElement('div');b.className='tile';b.textContent=letter;b.setAttribute('aria-hidden','true');grid.appendChild(b);return b});
+    const beats=Array.from({length:8},()=>{const b=document.createElement('i');b.className='beat';document.querySelector('#beatTrack').appendChild(b);return b});
+    const sequences={
+      basic:['basic'],
+      row1:['basic','row1','row1A','row1','row1F','row1','row1T','row1'],
+      row2:['basic','row1','row2','row2A','row2','row2F','row2','row2T','row2'],
+      row3:['basic','row1','row2','row2Down','row3Wide','row3','row3T','row3','row3B','row3','row3C','row3']
+    };
+    const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+    function timing(){const beat=60000/+document.querySelector('#bpm').value;const tight=+document.querySelector('#tightness').value/100;return {beat,motion:beat*(.92-tight*.58)}}
+    function setPose(name){poseName=name;const pose=layouts[name];tiles.forEach((t,i)=>{t.style.setProperty('--x',pose[i][0]);t.style.setProperty('--y',pose[i][1])})}
+    function setBeat(i){beatIndex=i;beats.forEach((b,n)=>b.classList.toggle('on',n===i%beats.length))}
+    function syncControls(){const {motion}=timing();const tight=+document.querySelector('#tightness').value;document.documentElement.style.setProperty('--motion-ms',motion+'ms');document.documentElement.style.setProperty('--motion-ease',tight>70?'cubic-bezier(.18,.92,.22,1)':'cubic-bezier(.45,0,.25,1)');document.querySelector('#bpmOut').textContent=document.querySelector('#bpm').value;document.querySelector('#tightnessOut').textContent=tight+'%'}
+    async function playSequence(target){const id=++runId;mode=target;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));document.querySelector('#formatLabel').textContent=labels[mode];document.querySelector('#stageMode').textContent=labels[mode];document.querySelector('#playState').textContent='Playing';const steps=sequences[target];for(let i=0;i<steps.length;i++){if(id!==runId)return;syncControls();setPose(steps[i]);setBeat(i);await sleep(timing().beat)}if(id===runId)document.querySelector('#playState').textContent='Complete'}
+    document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>playSequence(b.dataset.mode));
+    document.querySelector('#play').onclick=()=>playSequence(mode);
+    document.querySelector('#bpm').oninput=syncControls;
+    document.querySelector('#tightness').oninput=syncControls;
+    syncControls();setPose('basic');setBeat(0);
   </script>
 </body>
 </html>
