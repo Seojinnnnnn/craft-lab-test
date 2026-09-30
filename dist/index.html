@@ -22,8 +22,7 @@
     .stage::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:calc(var(--cell)/2) calc(var(--cell)/2);opacity:.18;pointer-events:none}
     .stage-note{position:absolute;top:16px;left:18px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
     .logo-grid{position:relative;width:calc(var(--cell)*8);height:calc(var(--cell)*3);max-width:92%;transition:transform .3s ease}
-    .tile{position:absolute;width:var(--cell);height:var(--cell);display:grid;place-items:center;border:2px solid var(--ink);font-size:calc(var(--cell)*.54);font-weight:400;line-height:1;background:#fff;transform:translate3d(calc(var(--x)*var(--cell)),calc(var(--y)*var(--cell)),0);transition:transform var(--motion-ms,300ms) var(--motion-ease,cubic-bezier(.2,.85,.25,1)),background .14s,color .14s;user-select:none;will-change:transform}
-    .tile.moving{z-index:2}
+    .piece{position:absolute;width:calc(var(--cell)*var(--span));height:var(--cell);object-fit:fill;display:block;transform:translate3d(calc(var(--x)*var(--cell)),calc(var(--y)*var(--cell)),0);transition:transform var(--motion-ms,300ms) var(--motion-ease,cubic-bezier(.2,.85,.25,1));user-select:none;will-change:transform}
     .controls{border-top:1px solid var(--ink);display:flex;flex-direction:column;min-height:0}
     .controls h1{font-size:28px;line-height:1.02;margin:18px 0 8px;letter-spacing:-.05em}
     .lede{font-size:14px;line-height:1.45;margin:0 0 24px;color:rgba(35,24,21,.65)}
@@ -45,7 +44,7 @@
     footer{border-top:1px solid var(--ink);padding-top:14px;display:flex;justify-content:space-between;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
     @media(max-width:900px){.shell{padding:18px}.status{display:none}main{grid-template-columns:1fr;padding-top:18px}.stage{min-height:58vh}.controls{min-height:auto}.logo-grid{transform:scale(.88)} }
     @media(max-width:560px){:root{--cell:33px}.stage{min-height:460px}.logo-grid{transform:none}.controls h1{font-size:24px}footer{gap:20px}}
-    @media(prefers-reduced-motion:reduce){.tile{transition-duration:.01ms!important}}
+    @media(prefers-reduced-motion:reduce){.piece{transition-duration:.01ms!important}}
   </style>
 </head>
 <body>
@@ -80,38 +79,44 @@
     <footer><span>Interactive identity system</span><span>K ARTS CCID · 2026</span></footer>
   </div>
   <script>
-    const letters=[...'CRAFTLAB'];
+    const elements=[
+      {name:'CR',src:'assets/cr.svg',span:2},
+      {name:'A',src:'assets/a.svg',span:1},
+      {name:'F',src:'assets/f.svg',span:1},
+      {name:'T',src:'assets/t.svg',span:1},
+      {name:'LAB',src:'assets/lab.svg',span:3}
+    ];
     const layouts={
-      basic:[[0,1],[1,1],[2,0],[3,2],[4,0],[5,1],[6,1],[7,1]],
-      row1:[[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1]],
-      row1A:[[0,1],[1,1],[2,0],[3,1],[4,1],[5,1],[6,1],[7,1]],
-      row1F:[[0,1],[1,1],[2,1],[3,2],[4,1],[5,1],[6,1],[7,1]],
-      row1T:[[0,1],[1,1],[2,1],[3,1],[4,0],[5,1],[6,1],[7,1]],
-      row2:[[0,0],[1,0],[2,0],[3,0],[4,0],[2,1],[3,1],[4,1]],
-      row2A:[[0,0],[1,0],[2,-1],[3,0],[4,0],[2,1],[3,1],[4,1]],
-      row2F:[[0,0],[1,0],[2,0],[3,1],[4,0],[2,1],[3,2],[4,1]],
-      row2T:[[0,0],[1,0],[2,0],[3,0],[5,0],[2,1],[3,1],[4,1]],
-      row2Down:[[0,0],[1,0],[2,0],[3,0],[4,0],[2,2],[3,2],[4,2]],
-      row3Wide:[[0,0],[1,0],[2,1],[3,1],[4,1],[2,2],[3,2],[4,2]],
-      row3:[[0,0],[1,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]],
-      row3T:[[0,0],[1,0],[0,1],[1,1],[2,0],[0,2],[1,2],[2,2]],
-      row3B:[[0,0],[1,0],[0,1],[1,1],[2,1],[0,2],[1,2],[3,2]],
-      row3C:[[-1,0],[1,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]]
+      basic:[[0,1],[2,0],[3,2],[4,0],[5,1]],
+      row1:[[0,1],[2,1],[3,1],[4,1],[5,1]],
+      row1A:[[0,1],[2,0],[3,1],[4,1],[5,1]],
+      row1F:[[0,1],[2,1],[3,2],[4,1],[5,1]],
+      row1T:[[0,1],[2,1],[3,1],[4,0],[5,1]],
+      row2:[[0,0],[2,0],[3,0],[4,0],[2,1]],
+      row2A:[[0,0],[2,-1],[3,0],[4,0],[2,1]],
+      row2F:[[0,0],[2,0],[3,1],[4,0],[2,2]],
+      row2T:[[0,0],[2,0],[3,0],[4,1],[2,2]],
+      row2Down:[[0,0],[2,0],[3,0],[4,0],[2,2]],
+      row3Wide:[[0,0],[2,1],[3,1],[4,1],[2,2]],
+      row3:[[0,0],[0,1],[1,1],[2,1],[0,2]],
+      row3T:[[0,0],[0,1],[1,1],[2,0],[0,2]],
+      row3Lab:[[0,0],[0,1],[1,1],[2,1],[1,2]],
+      row3CR:[[1,0],[0,1],[1,1],[2,1],[0,2]]
     };
     const labels={basic:'Basic',row1:'1 row',row2:'2 row',row3:'3 row'};
     const grid=document.querySelector('#logoGrid');
     let mode='basic',poseName='basic',runId=0,beatIndex=0;
-    const tiles=letters.map((letter)=>{const b=document.createElement('div');b.className='tile';b.textContent=letter;b.setAttribute('aria-hidden','true');grid.appendChild(b);return b});
+    const pieces=elements.map((element)=>{const image=document.createElement('img');image.className='piece';image.src=element.src;image.alt='';image.style.setProperty('--span',element.span);image.setAttribute('aria-hidden','true');grid.appendChild(image);return image});
     const beats=Array.from({length:8},()=>{const b=document.createElement('i');b.className='beat';document.querySelector('#beatTrack').appendChild(b);return b});
     const sequences={
       basic:['basic'],
       row1:['basic','row1','row1A','row1','row1F','row1','row1T','row1'],
       row2:['basic','row1','row2','row2A','row2','row2F','row2','row2T','row2'],
-      row3:['basic','row1','row2','row2Down','row3Wide','row3','row3T','row3','row3B','row3','row3C','row3']
+      row3:['basic','row1','row2','row2Down','row3Wide','row3','row3T','row3','row3Lab','row3','row3CR','row3']
     };
     const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
     function timing(){const beat=60000/+document.querySelector('#bpm').value;const tight=+document.querySelector('#tightness').value/100;return {beat,motion:beat*(.92-tight*.58)}}
-    function setPose(name){poseName=name;const pose=layouts[name];tiles.forEach((t,i)=>{t.style.setProperty('--x',pose[i][0]);t.style.setProperty('--y',pose[i][1])})}
+    function setPose(name){poseName=name;const pose=layouts[name];pieces.forEach((piece,i)=>{piece.style.setProperty('--x',pose[i][0]);piece.style.setProperty('--y',pose[i][1])})}
     function setBeat(i){beatIndex=i;beats.forEach((b,n)=>b.classList.toggle('on',n===i%beats.length))}
     function syncControls(){const {motion}=timing();const tight=+document.querySelector('#tightness').value;document.documentElement.style.setProperty('--motion-ms',motion+'ms');document.documentElement.style.setProperty('--motion-ease',tight>70?'cubic-bezier(.18,.92,.22,1)':'cubic-bezier(.45,0,.25,1)');document.querySelector('#bpmOut').textContent=document.querySelector('#bpm').value;document.querySelector('#tightnessOut').textContent=tight+'%'}
     async function playSequence(target){const id=++runId;mode=target;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));document.querySelector('#formatLabel').textContent=labels[mode];document.querySelector('#stageMode').textContent=labels[mode];document.querySelector('#playState').textContent='Playing';const steps=sequences[target];for(let i=0;i<steps.length;i++){if(id!==runId)return;syncControls();setPose(steps[i]);setBeat(i);await sleep(timing().beat)}if(id===runId)document.querySelector('#playState').textContent='Complete'}
