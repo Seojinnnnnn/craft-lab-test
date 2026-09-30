@@ -83,7 +83,6 @@
         <section class="pattern-panel" id="patternPanel" hidden>
           <div class="section-title"><span>Pattern builder</span><span>Paused frame</span></div>
           <div class="range-row"><label for="patternScale">Scale</label><input id="patternScale" type="range" min="28" max="120" value="58" step="1"><output id="patternScaleOut">58</output></div>
-          <div class="range-row"><label for="patternGap">Gap</label><input id="patternGap" type="range" min="-8" max="32" value="0" step="1"><output id="patternGapOut">0</output></div>
           <div class="range-row"><label for="patternOffset">Offset</label><input id="patternOffset" type="range" min="0" max="100" value="50" step="1"><output id="patternOffsetOut">50%</output></div>
           <div class="colors">
             <label class="color-control">Space 1<input id="color1" type="color" value="#62ff00"></label>
@@ -107,6 +106,7 @@
     ];
     const layouts={
       basic:[[0,0],[0,1],[1,1],[2,1],[0,2]],
+      row1Spread:[[0,0],[2,1],[3,1],[4,1],[5,2]],
       row1Expand:[[0,1],[2,1],[3,1],[4,1],[5,2]],
       row1:[[0,1],[2,1],[3,1],[4,1],[5,1]],
       r1ArtsL:[[0,1],[2,0],[3,1],[4,1],[5,0]],
@@ -126,8 +126,10 @@
       r2T2:[[0,1],[2,1],[3,1],[4,0],[2,2]],
       r2T1:[[0,1],[2,1],[3,1],[4,0],[1,2]],
       r2T0:[[0,1],[2,1],[3,1],[4,0],[0,2]],
-      r3Prep1:[[0,0],[2,0],[3,1],[4,2],[3,2]],
-      r3Prep2:[[0,0],[2,0],[2,1],[2,2],[3,2]],
+      r3Prep1:[[0,0],[2,0],[3,1],[4,1],[5,2]],
+      r3Prep2:[[0,0],[2,0],[3,1],[4,2],[5,2]],
+      r3Prep3:[[0,0],[2,0],[3,1],[2,2],[5,2]],
+      r3Prep4:[[0,0],[2,0],[2,1],[2,2],[5,2]],
       r3A2:[[0,0],[2,0],[2,1],[2,2],[3,2]],
       r3A1:[[0,0],[2,0],[2,1],[2,2],[3,1]],
       r3A0:[[0,0],[2,0],[2,1],[2,2],[3,0]],
@@ -143,9 +145,9 @@
     let mode='basic',poseName='basic',runId=0,beatIndex=0,isLooping=true;
     const pieces=elements.map((element)=>{const image=document.createElement('img');image.className='piece';image.src=element.src;image.alt='';image.style.setProperty('--span',element.span);image.setAttribute('aria-hidden','true');grid.appendChild(image);return image});
     const beats=Array.from({length:8},()=>{const b=document.createElement('i');b.className='beat';document.querySelector('#beatTrack').appendChild(b);return b});
-    const row1Sequence=['basic','basic','basic','row1Expand','row1','r1ArtsL','r1ArtsR','r1FabL','r1FabR','r1TechL','r1TechR','row1','row1Expand','basic','basic'];
-    const row2Sequence=['basic','basic','basic','row1Expand','row1','row2Drop','row2Slide','r2A2','r2A1','r2A0','r2F0','r2F1','r2F2','r2T2','r2T1','r2T0','row2Slide','row2Drop','row1','row1Expand','basic','basic'];
-    const row3Sequence=['basic','basic','basic','row1Expand','row1','row2Drop','row2Slide','r2A2','r3Prep1','r3Prep2','r3A2','r3A1','r3A0','r3F0','r3F1','r3F2','r3T2','r3T1','r3T0','r3T1','r3T2','r3F2','r3Prep2','r3Prep1','r2A2','row2Slide','row2Drop','row1','row1Expand','basic','basic'];
+    const row1Sequence=['basic','basic','basic','row1Spread','row1Expand','row1','r1ArtsL','r1ArtsR','r1FabL','r1FabR','r1TechL','r1TechR','row1','row1Expand','row1Spread','basic','basic'];
+    const row2Sequence=['basic','basic','basic','row1Spread','row1Expand','row1','row2Drop','row2Slide','r2A2','r2A1','r2A0','r2F0','r2F1','r2F2','r2T2','r2T1','r2T0','row2Slide','row2Drop','row1','row1Expand','row1Spread','basic','basic'];
+    const row3Sequence=['basic','basic','basic','row1Spread','row1Expand','row1','row2Drop','row2Slide','r2A2','r3Prep1','r3Prep2','r3Prep3','r3Prep4','r3A2','r3A1','r3A0','r3F0','r3F1','r3F2','r3T2','r3T1','r3T0','r3T1','r3T2','r3F2','r3A2','r3Prep4','r3Prep3','r3Prep2','r3Prep1','r2A2','row2Slide','row2Drop','row1','row1Expand','row1Spread','basic','basic'];
     const sequences={row1:row1Sequence,row2:row2Sequence,row3:row3Sequence};
     sequences.basic=[...row1Sequence,...row2Sequence,...row3Sequence];
     const patternCanvas=document.querySelector('#patternCanvas');
@@ -156,7 +158,7 @@
     function setPose(name){poseName=name;const pose=layouts[name];pieces.forEach((piece,i)=>{piece.style.setProperty('--x',pose[i][0]);piece.style.setProperty('--y',pose[i][1])})}
     function setBeat(i){beatIndex=i;beats.forEach((b,n)=>b.classList.toggle('on',n===i%beats.length))}
     function syncControls(){const {motion}=timing();const tight=+document.querySelector('#tightness').value;document.documentElement.style.setProperty('--motion-ms',motion+'ms');document.documentElement.style.setProperty('--motion-ease',tight>70?'cubic-bezier(.18,.92,.22,1)':'cubic-bezier(.45,0,.25,1)');document.querySelector('#bpmOut').textContent=document.querySelector('#bpm').value;document.querySelector('#tightnessOut').textContent=tight+'%'}
-    function patternSettings(multiplier=1){return {cell:+document.querySelector('#patternScale').value*multiplier,gap:+document.querySelector('#patternGap').value*multiplier,offset:+document.querySelector('#patternOffset').value/100,colors:[document.querySelector('#color1').value,document.querySelector('#color2').value,document.querySelector('#color3').value],background:document.querySelector('#colorBg').value}}
+    function patternSettings(multiplier=1){return {cell:+document.querySelector('#patternScale').value*multiplier,gap:0,offset:+document.querySelector('#patternOffset').value/100,colors:[document.querySelector('#color1').value,document.querySelector('#color2').value,document.querySelector('#color3').value],background:document.querySelector('#colorBg').value}}
     function patternGeometry(multiplier=1){const settings=patternSettings(multiplier),pose=layouts[poseName],step=settings.cell*(38.593/41.457);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;pose.forEach(([x,y],i)=>{minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x+elements[i].span-1);maxY=Math.max(maxY,y)});const gridMinX=minX-1,gridMinY=minY-1,gridMaxX=maxX+1,gridMaxY=maxY+1;const cols=gridMaxX-gridMinX+1,rows=gridMaxY-gridMinY+1;return {settings,pose,step,minX,minY,maxX,maxY,gridMinX,gridMinY,gridMaxX,gridMaxY,tileW:(cols-1)*step+settings.cell+settings.gap,tileH:(rows-1)*step+settings.cell+settings.gap}}
     function occupiedCells(pose){const occupied=new Set();pose.forEach(([x,y],i)=>{for(let n=0;n<elements[i].span;n++)occupied.add(`${x+n},${y}`)});return occupied}
     async function drawPattern(canvas,width,height,multiplier=1){canvas.width=Math.round(width);canvas.height=Math.round(height);const ctx=canvas.getContext('2d');const g=patternGeometry(multiplier),occupied=occupiedCells(g.pose);ctx.fillStyle=g.settings.background;ctx.fillRect(0,0,width,height);let row=0;for(let tileY=-g.tileH;tileY<height+g.tileH;tileY+=g.tileH){const stagger=(row%2)*g.tileW*g.settings.offset;for(let tileX=-g.tileW*2+stagger;tileX<width+g.tileW;tileX+=g.tileW){const originX=tileX-g.gridMinX*g.step,originY=tileY-g.gridMinY*g.step;for(let y=g.gridMinY;y<=g.gridMaxY;y++){for(let x=g.gridMinX;x<=g.gridMaxX;x++){if(occupied.has(`${x},${y}`))continue;ctx.fillStyle=g.settings.colors[Math.abs(x*2+y)%g.settings.colors.length];ctx.fillRect(originX+x*g.step,originY+y*g.step,g.step+.5,g.step+.5)}}}row++}}
@@ -171,7 +173,7 @@
     document.querySelector('#play').onclick=togglePlayback;
     document.querySelector('#bpm').oninput=syncControls;
     document.querySelector('#tightness').oninput=syncControls;
-    ['patternScale','patternGap','patternOffset','color1','color2','color3','colorBg'].forEach(id=>document.querySelector('#'+id).oninput=()=>{document.querySelector('#patternScaleOut').textContent=document.querySelector('#patternScale').value;document.querySelector('#patternGapOut').textContent=document.querySelector('#patternGap').value;document.querySelector('#patternOffsetOut').textContent=document.querySelector('#patternOffset').value+'%';refreshPattern()});
+    ['patternScale','patternOffset','color1','color2','color3','colorBg'].forEach(id=>document.querySelector('#'+id).oninput=()=>{document.querySelector('#patternScaleOut').textContent=document.querySelector('#patternScale').value;document.querySelector('#patternOffsetOut').textContent=document.querySelector('#patternOffset').value+'%';refreshPattern()});
     document.querySelector('#savePng').onclick=async()=>{const canvas=document.createElement('canvas');await drawPattern(canvas,2400,1600,2.5);canvas.toBlob(blob=>downloadBlob(blob,'craft-lab-pattern.png'),'image/png')};
     document.querySelector('#saveSvg').onclick=()=>downloadBlob(new Blob([buildPatternSvg()],{type:'image/svg+xml'}),'craft-lab-pattern.svg');
     window.addEventListener('resize',refreshPattern);
