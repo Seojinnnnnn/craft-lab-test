@@ -92,6 +92,15 @@
           </div>
           <div class="exports"><button id="savePng">Save PNG</button><button id="saveSvg">Save SVG</button></div>
         </section>
+        <section class="section">
+          <div class="section-title"><span>Image sequence</span><span>PNG / ZIP</span></div>
+          <div class="range-row"><label for="exportSize">크기</label><select id="exportSize"><option value="1920">1920 × 1080</option><option value="1080">1080 × 1080</option><option value="1280">1280 × 720</option></select></div>
+          <div class="range-row"><label for="exportFps">프레임</label><select id="exportFps"><option>30</option><option>24</option><option>60</option></select><span>fps</span></div>
+          <div class="range-row"><label for="exportBg">배경</label><select id="exportBg"><option value="transparent">투명</option><option value="white">흰색</option></select></div>
+          <p style="font-size:12px;line-height:1.5">순수 검정색(#000000) 로고를 선택한 Format · BPM · Tightness로 한 사이클 저장합니다. 격자와 UI는 포함되지 않습니다.</p>
+          <button class="primary" id="exportSequence" style="width:100%">PNG 시퀀스 저장 (.zip)</button>
+          <p id="exportStatus" role="status" style="font-size:12px;line-height:1.5"></p>
+        </section>
       </aside>
     </main>
     <footer><span>Interactive identity system</span><span>K ARTS CCID · 2026</span></footer>
@@ -180,5 +189,6 @@
     window.addEventListener('keydown',event=>{if(event.code==='Space'&&!event.target.matches('input,button')){event.preventDefault();togglePlayback()}});
     syncControls();setPose('basic');setBeat(0);setTimeout(()=>playLoop('basic'),timing().beat);
   </script>
+  <script src="sequence-export.js"></script>
 </body>
 </html>
